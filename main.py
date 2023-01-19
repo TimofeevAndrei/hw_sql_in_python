@@ -45,7 +45,28 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
             print('Новый клиент успешно добавлен в базу.')
             return
 
+    def add_phone():
+        in_phone = int(input('Введите номер телефона: '))
 
+        with conn.cursor() as cur:
+            cur.execute('select number from phonebook')
+            allphones = cur.fetchall()
+            print(allphones)
+            for i in allphones:
+                if in_phone in i:
+                    print('Такой номер телефона уже есть в базе.')
+                    phonechek = 'select client_id from {table} where number = %s'
+                    cur.execute(phonechek.format(table='phonebook'), [in_phone])
+                    print(cur.fetchone())
+                    return
+            in_first_name = input('Введите имя: ')
+            in_last_name = input('Введите фамилию: ')
+            new_client = 'insert into client (first_name, last_name, email) values (%s, %s, %s)'
+            cur.execute(new_client.format(table='client'), (in_first_name, in_last_name, in_email))
+            conn.commit()
+            print('Новый клиент успешно добавлен в базу.')
+            return
 
+add_phone()
 
 conn.close()
