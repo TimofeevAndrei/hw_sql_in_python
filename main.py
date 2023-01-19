@@ -1,6 +1,7 @@
 import psycopg2
 from settings import PASS
 
+
 with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as conn:
     def creat_tables():
         with conn.cursor() as cur:
@@ -21,5 +22,30 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
                 """)
             conn.commit()
         return
-creat_tables()
+
+    def add_client():
+        in_email = input('Введите email: ')
+
+        with conn.cursor() as cur:
+            cur.execute('select email from client')
+            allmail = cur.fetchall()
+
+            for i in allmail:
+                if in_email in i:
+                    print('Клиент с таким email уже существует.')
+                    mailchek = 'select first_name, last_name, email from {table} where email = %s'
+                    cur.execute(mailchek.format(table='client'), [in_email])
+                    print(cur.fetchone())
+                    return
+            in_first_name = input('Введите имя: ')
+            in_last_name = input('Введите фамилию: ')
+            new_client = 'insert into client (first_name, last_name, email) values (%s, %s, %s)'
+            cur.execute(new_client.format(table='client'), (in_first_name, in_last_name, in_email))
+            conn.commit()
+            print('Новый клиент успешно добавлен в базу.')
+            return
+
+
+
+
 conn.close()
