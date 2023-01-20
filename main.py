@@ -1,7 +1,6 @@
 import psycopg2
 from settings import PASS
 
-
 with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as conn:
     def creat_tables():
         with conn.cursor() as cur:
