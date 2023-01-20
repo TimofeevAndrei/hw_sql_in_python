@@ -153,6 +153,25 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
 
         conn.commit()
 
+    def delete_client():
+        print('Поиск клиента осуществляеться по email, так как он уникален для каждого клиента.')
+        search = input('Введите email клиента: ')
+        with conn.cursor() as cur:
+            find_client = 'select id, first_name, last_name, email from {table} where email = %s'
+            cur.execute(find_client.format(table='client'), [search])
+            result = (cur.fetchone())
+            id_client = result[0]
+            if search in result:
+                answer = input(f'Найдена запись {result[1]} {result[2]}, email: {result[3]} удалить? Введите yes/no: ')
+                if answer.lower() == 'yes':
+                    phone_del = 'delete from {table} where clientid = %s'
+                    cur.execute(phone_del.format(table='phonebook'), [id_client])
+                    client_del = 'delete from {table} where id = %s'
+                    cur.execute(client_del.format(table='client'), [id_client])
+                    conn.commit()
+                    print('Запись и связанные номера телефонов удалены!')
+                elif answer.lower() == 'no':
+                    return
 
 
 
@@ -163,6 +182,9 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
 
 
 
-delete_phone()
+
+
+
+delete_client()
 
 conn.close()
