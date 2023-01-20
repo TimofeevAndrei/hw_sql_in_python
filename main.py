@@ -97,9 +97,58 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
                 print(f'Пользователь: {result[1]} {result[2]}, email: {result[3]} '
                       f'отредактирован на {result_after[0]} {result_after[1]}, email: {result_after[2]}')
 
+    def delete_phone():
+        request = int(input(f'По какому параметру осуществить поиск?\n'
+                            f'Если по номеру телефона введите 1:\n'
+                            f'Если по email то введите 2:\n'
+                            f'Ввод: '))
+        with conn.cursor() as cur:
+            if request == 1:
+                search_phone = int(input('Введите телефон клиента: '))
+                phone_find = 'select number, clientid from {table} where number = %s'
+                cur.execute(phone_find.format(table='phonebook'), [search_phone])
+                result_phone = (cur.fetchone())
+                if result_phone is None:
+                    print('Записи отсутсвуют')
+                else:
+                    find_client_id = 'select first_name, last_name, email from {table} where id = %s'
+                    cur.execute(find_client_id.format(table='client'), [result_phone[1]])
+                    result_id = (cur.fetchone())
+                    answer = input(f'Найдена запись {result_phone}, принадлежащая {result_id} удалить? Введите yes/no: ')
+                    if answer.lower() == 'yes':
+                        print(type(result_phone))
+                        phone_del = 'delete from {table} where number = %s'
+                        cur.execute(phone_del.format(table='phonebook'), [result_phone[0]])
+                    elif answer.lower() == 'no':
+                        return
+                    else:
+                        print('Некоректный ввод')
+
+            elif request == 2:
+                search = input('Введите email клиента: ')
+                find_client_email = 'select id, first_name, last_name, email from {table} where email = %s'
+                cur.execute(find_client_email.format(table='client'), [search])
+                result = (cur.fetchone())
+                if result is None:
+                    print('Записи отсутсвуют')
+                else:
+                    print(result)
+            else:
+                print('Некоректный ввод')
+                return
+
+        conn.commit()
 
 
 
-edit_client()
+
+
+
+
+
+
+
+
+delete_phone()
 
 conn.close()
