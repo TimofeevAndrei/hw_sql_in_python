@@ -51,15 +51,16 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
         with conn.cursor() as cur:
             cur.execute('select number from phonebook')
             allphones = cur.fetchall()
-            print(allphones)
             for i in allphones:
                 if in_phone in i:
-                    print('Такой номер телефона уже есть в базе.')
-                    phonechek = 'select client_id from {table} where number = %s'
+                    phonechek = 'select clientid from {table} where number = %s'
                     cur.execute(phonechek.format(table='phonebook'), [in_phone])
-                    print(cur.fetchone())
+                    phone_id=(cur.fetchone())
+                    find_client = 'select first_name, last_name, email from {table} where id = %s'
+                    cur.execute(find_client.format(table='client'), [phone_id])
+                    result = (cur.fetchone())
+                    print(f'Такой номер телефона уже принадлежит клиенту: {result}')
                     return
-            in_first_name = input('Введите имя: ')
             in_last_name = input('Введите фамилию: ')
             new_client = 'insert into client (first_name, last_name, email) values (%s, %s, %s)'
             cur.execute(new_client.format(table='client'), (in_first_name, in_last_name, in_email))
