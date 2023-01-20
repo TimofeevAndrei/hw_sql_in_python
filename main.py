@@ -33,8 +33,8 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
             for i in allmail:
                 if in_email in i:
                     print('Клиент с таким email уже существует.')
-                    mailchek = 'select first_name, last_name, email from {table} where email = %s'
-                    cur.execute(mailchek.format(table='client'), [in_email])
+                    mailcheck = 'select first_name, last_name, email from {table} where email = %s'
+                    cur.execute(mailcheck.format(table='client'), [in_email])
                     print(cur.fetchone())
                     return
             in_first_name = input('Введите имя: ')
@@ -73,6 +73,33 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
                   f' {result[1]} {result[2]}, email: {result[3]}')
             return
 
-add_phone()
+    def edit_client():
+        print('Поиск клиента осуществляеться по email, так как он уникален для каждого клиента.')
+        search = input('Введите email клиента: ')
+        with conn.cursor() as cur:
+            find_client = 'select id, first_name, last_name, email from {table} where email = %s'
+            cur.execute(find_client.format(table='client'), [search])
+            result = (cur.fetchone())
+            if search in result:
+                print(f'Клиент найден: {result[1]} {result[2]}, email: {result[3]}')
+                id_client = result[0]
+                new_first_name = input('Введите новое имя:')
+                new_last_name = input('Введите новую фамилию:')
+                new_email = input('Введите новый email:')
+                editing_client = 'update {table} set first_name=%s, last_name=%s, email=%s where id={id_client}'
+                cur.execute(editing_client.format(table='client', id_client=id_client), (new_first_name, new_last_name,
+                                                                                         new_email))
+
+                check = 'select first_name, last_name, email from {table} where email = %s'
+                cur.execute(check.format(table='client'), [new_email])
+                result_after = (cur.fetchone())
+                conn.commit()
+                print(f'Пользователь: {result[1]} {result[2]}, email: {result[3]} '
+                      f'отредактирован на {result_after[0]} {result_after[1]}, email: {result_after[2]}')
+
+
+
+
+edit_client()
 
 conn.close()
