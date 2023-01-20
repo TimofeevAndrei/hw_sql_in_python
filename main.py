@@ -59,13 +59,18 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
                     find_client = 'select first_name, last_name, email from {table} where id = %s'
                     cur.execute(find_client.format(table='client'), [phone_id])
                     result = (cur.fetchone())
-                    print(f'Такой номер телефона уже принадлежит клиенту: {result}')
+                    print(f'Такой номер телефона уже принадлежит клиенту:'
+                          f' {result[0]} {result[1]}, email: {result[2]}')
                     return
-            in_last_name = input('Введите фамилию: ')
-            new_client = 'insert into client (first_name, last_name, email) values (%s, %s, %s)'
-            cur.execute(new_client.format(table='client'), (in_first_name, in_last_name, in_email))
+            matching = input('email клиента: ')
+            find_client = 'select id, first_name, last_name, email from {table} where email = %s'
+            cur.execute(find_client.format(table='client'), [matching])
+            result = (cur.fetchone())
+            new_phone = 'insert into {table} (number, clientid) values (%s, %s)'
+            cur.execute(new_phone.format(table='phonebook'), (in_phone, result[0]))
             conn.commit()
-            print('Новый клиент успешно добавлен в базу.')
+            print(f'Добавилен новый номер телефона в БД и присвоен пользователю: '
+                  f' {result[1]} {result[2]}, email: {result[3]}')
             return
 
 add_phone()
