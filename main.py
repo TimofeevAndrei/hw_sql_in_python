@@ -116,7 +116,6 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
                     result_id = (cur.fetchone())
                     answer = input(f'Найдена запись {result_phone}, принадлежащая {result_id} удалить? Введите yes/no: ')
                     if answer.lower() == 'yes':
-                        print(type(result_phone))
                         phone_del = 'delete from {table} where number = %s'
                         cur.execute(phone_del.format(table='phonebook'), [result_phone[0]])
                     elif answer.lower() == 'no':
@@ -132,7 +131,22 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
                 if result is None:
                     print('Записи отсутсвуют')
                 else:
-                    print(result)
+                    find_phones = 'select id, number from {table} where clientid = %s'
+                    cur.execute(find_phones.format(table='phonebook'), [result[0]])
+                    result_phones = (cur.fetchall())
+                    print(f'Клиент найден {result}')
+                    sockets = []
+                    for v, k in result_phones:
+                        print(f'Ячейка:{v} содержит номер телефона: {k}')
+                        sockets.append(v)
+                    answer = int(input('Введите номер ячейки которую желаете удалить: '))
+                    if answer in sockets:
+                        phone_del = 'delete from {table} where id = %s'
+                        cur.execute(phone_del.format(table='phonebook'), [answer])
+                        print(f'ячейка №{answer} успешно удаленна.')
+                    else:
+                        print('Некоректный ввод')
+                        return
             else:
                 print('Некоректный ввод')
                 return
