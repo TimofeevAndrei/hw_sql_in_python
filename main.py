@@ -252,5 +252,8 @@ with psycopg2.connect(database="ClientDB", user="postgres", password=PASS) as co
             else:
                 print('Неверная команда')
 
-operation()
+
+if __name__ == "__main__":
+    operation()
+
 conn.close()
