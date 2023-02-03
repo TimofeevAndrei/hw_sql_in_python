@@ -145,58 +145,53 @@ def delete_client(cur, client_id):
 
 
 def client_search(cur, req):
-    print(
-        f"Поиск по имени - 1\n"
-        f"Поиск по фамилии - 2\n"
-        f"Поиск по email - 3\n"
-        f"Поиск по номеру телефона - 4\n"
-    )
-    answ = int(input("Введите типа поиска от 1 до 4: "))
-    if answ == 1:
-        search = input("Введите имя:")
-        find_client = "select id, first_name, last_name, email from {table} where first_name = %s"
-        cur.execute(find_client.format(table="client"), [search])
+    if type(req) == int:
+        find_client = "select id, first_name, last_name, email from {table} where id = %s"
+        cur.execute(find_client.format(table="client"), [req])
         result = cur.fetchone()
         if result is None:
-            print("Записи отсутсвуют")
-        else:
-            print(f"Клиент найден {result}")
-    elif answ == 2:
-        search = input("Введите фамилию:")
-        find_client = "select id, first_name, last_name, email from {table} where last_name = %s"
-        cur.execute(find_client.format(table="client"), [search])
-        result = cur.fetchone()
-        if result is None:
-            print("Записи отсутсвуют")
-        else:
-            print(f"Клиент найден {result}")
-    elif answ == 3:
-        search = input("Введите email:")
-        find_client = (
-            "select id, first_name, last_name, email from {table} where email = %s"
-        )
-        cur.execute(find_client.format(table="client"), [search])
-        result = cur.fetchone()
-        if result is None:
-            print("Записи отсутсвуют")
-        else:
-            print(f"Клиент найден {result}")
-    elif answ == 4:
-        search = input("Введите номер телефона:")
-        find_client = "select clientid from {table} where number = %s"
-        cur.execute(find_client.format(table="phonebook"), [search])
-        result_num = cur.fetchone()
-        find_client = (
-            "select id, first_name, last_name, email from {table} where id = %s"
-        )
-        cur.execute(find_client.format(table="client"), [result_num])
-        result = cur.fetchone()
-        if result is None:
-            print("Записи отсутсвуют")
+            find_client = "select clientid from {table} where number = %s"
+            cur.execute(find_client.format(table="phonebook"), [req])
+            result_num = cur.fetchone()
+            find_client = (
+                "select id, first_name, last_name, email from {table} where id = %s"
+            )
+            cur.execute(find_client.format(table="client"), [result_num])
+            result = cur.fetchone()
+            if result is None:
+                print("Записи отсутсвуют")
+            else:
+                print(f"Клиент найден {result}")
         else:
             print(f"Клиент найден {result}")
     else:
-        print("Некоректный ввод")
+        find_client = "select id, first_name, last_name, email from {table} where first_name = %s"
+        cur.execute(find_client.format(table="client"), [req])
+        result = cur.fetchone()
+        if result is None:
+            find_client = "select id, first_name, last_name, email from {table} where last_name = %s"
+            cur.execute(find_client.format(table="client"), [req])
+            result = cur.fetchone()
+            if result is None:
+                find_client = (
+                    "select id, first_name, last_name, email from {table} where email = %s"
+                )
+                cur.execute(find_client.format(table="client"), [req])
+                result = cur.fetchone()
+                if result is None:
+                    print("Записи отсутсвуют")
+                else:
+                    print(f"Клиент найден {result}")
+            else:
+                print(f"Клиент найден {result}")
+        else:
+            print(f"Клиент найден {result}")
+
+
+
+
+
+
 
 
 print(
@@ -226,7 +221,7 @@ def operation():
         elif user_comand == "6":
             delete_client(cur, 6)
         elif user_comand == "7":
-            client_search(cur)
+            client_search(cur, 5858)
         else:
             print("Неверная команда")
 
