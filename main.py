@@ -26,8 +26,7 @@ def creat_tables(cur):
     return
 
 
-def add_client(cur):
-    in_email = input("Введите email: ")
+def add_client(cur, in_email, in_first_name, in_last_name):
 
     cur.execute("select email from client")
     allmail = cur.fetchall()
@@ -41,8 +40,6 @@ def add_client(cur):
             cur.execute(mailcheck.format(table="client"), [in_email])
             print(cur.fetchone())
             return
-    in_first_name = input("Введите имя: ")
-    in_last_name = input("Введите фамилию: ")
     new_client = (
         "insert into client (first_name, last_name, email) values (%s, %s, %s)"
     )
@@ -54,46 +51,32 @@ def add_client(cur):
     return
 
 
-def add_phone(cur):
-    in_phone = int(input("Введите номер телефона: "))
-
-    cur.execute("select number from phonebook")
-    allphones = cur.fetchall()
-    for i in allphones:
-        if in_phone in i:
-            phonecheck = "select clientid from {table} where number = %s"
-            cur.execute(phonecheck.format(table="phonebook"), [in_phone])
-            phone_id = cur.fetchone()
-            find_client = (
-                "select first_name, last_name, email from {table} where id = %s"
-            )
-            cur.execute(find_client.format(table="client"), [phone_id])
-            result = cur.fetchone()
-            print(
-                f"Такой номер телефона уже принадлежит клиенту:"
-                f" {result[0]} {result[1]}, email: {result[2]}"
-            )
-            return
-    matching = input("email клиента: ")
-    find_client = (
-        "select id, first_name, last_name, email from {table} where email = %s"
-    )
-    cur.execute(find_client.format(table="client"), [matching])
-    result = cur.fetchone()
-    if result is None:
-        print("Записи отсутсвуют")
-    else:
-        new_phone = "insert into {table} (number, clientid) values (%s, %s)"
-        cur.execute(new_phone.format(table="phonebook"), (in_phone, result[0]))
-        conn.commit()
-        print(
-            f"Добавилен новый номер телефона в БД и присвоен пользователю: "
-            f" {result[1]} {result[2]}, email: {result[3]}"
+def add_phone(cur, in_phone, client_id):
+    phone_find = "select number, clientid from {table} where number = %s"
+    cur.execute(phone_find.format(table="phonebook"), [in_phone])
+    result_phone = cur.fetchone()
+    if result_phone is None:
+        find_client = (
+            "select id, first_name, last_name, email from {table} where id = %s"
         )
+        cur.execute(find_client.format(table="client"), [client_id])
+        result = cur.fetchone()
+        if result is None:
+            print("Клиент с таким ID отсутсвуют")
+        else:
+            new_phone = "insert into {table} (number, clientid) values (%s, %s)"
+            cur.execute(new_phone.format(table="phonebook"), (in_phone, client_id))
+            conn.commit()
+            print(
+                f"Добавилен новый номер телефона в БД и присвоен пользователю: "
+                f" {result[1]} {result[2]}, email: {result[3]}"
+            )
+    else:
+        print(f"Номер уже в базе и принадлежит клиенту с ID {result_phone[1]}")
         return
 
 
-def edit_client(cur):
+def edit_client(cur, email, new_first_name, new_last_name, new_email):
     print(
         "Поиск клиента осуществляеться по email, так как он уникален для каждого клиента."
     )
@@ -104,12 +87,9 @@ def edit_client(cur):
     )
     cur.execute(find_client.format(table="client"), [search])
     result = cur.fetchone()
-    if search in result:
+    if email in result:
         print(f"Клиент найден: {result[1]} {result[2]}, email: {result[3]}")
         id_client = result[0]
-        new_first_name = input("Введите новое имя:")
-        new_last_name = input("Введите новую фамилию:")
-        new_email = input("Введите новый email:")
         editing_client = "update {table} set first_name=%s, last_name=%s, email=%s where id={id_client}"
         cur.execute(
             editing_client.format(table="client", id_client=id_client),
@@ -126,99 +106,45 @@ def edit_client(cur):
         )
 
 
-def delete_phone(cur):
-    request = int(
-        input(
-            f"По какому параметру осуществить поиск?\n"
-            f"Если по номеру телефона введите 1:\n"
-            f"Если по email то введите 2:\n"
-            f"Ввод: "
-        )
-    )
-    if request == 1:
-        search_phone = int(input("Введите телефон клиента: "))
-        phone_find = "select number, clientid from {table} where number = %s"
-        cur.execute(phone_find.format(table="phonebook"), [search_phone])
-        result_phone = cur.fetchone()
-        if result_phone is None:
-            print("Записи отсутсвуют")
-        else:
-            find_client_id = (
-                "select first_name, last_name, email from {table} where id = %s"
-            )
-            cur.execute(find_client_id.format(table="client"), [result_phone[1]])
-            result_id = cur.fetchone()
-            answer = input(
-                f"Найдена запись {result_phone}, принадлежащая {result_id} удалить? Введите yes/no: "
-            )
-            if answer.lower() == "yes":
-                phone_del = "delete from {table} where number = %s"
-                cur.execute(phone_del.format(table="phonebook"), [result_phone[0]])
-            elif answer.lower() == "no":
-                return
-            else:
-                print("Некоректный ввод")
+def delete_phone(cur, phone):
 
-    elif request == 2:
-        search = input("Введите email клиента: ")
-        find_client_email = (
-            "select id, first_name, last_name, email from {table} where email = %s"
-        )
-        cur.execute(find_client_email.format(table="client"), [search])
-        result = cur.fetchone()
-        if result is None:
-            print("Записи отсутсвуют")
-        else:
-            find_phones = "select id, number from {table} where clientid = %s"
-            cur.execute(find_phones.format(table="phonebook"), [result[0]])
-            result_phones = cur.fetchall()
-            print(f"Клиент найден {result}")
-            sockets = []
-            for v, k in result_phones:
-                print(f"Ячейка:{v} содержит номер телефона: {k}")
-                sockets.append(v)
-            answer = int(input("Введите номер ячейки которую желаете удалить: "))
-            if answer in sockets:
-                phone_del = "delete from {table} where id = %s"
-                cur.execute(phone_del.format(table="phonebook"), [answer])
-                print(f"ячейка №{answer} успешно удаленна.")
-            else:
-                print("Некоректный ввод")
-                return
+    phone_find = "select number, clientid from {table} where number = %s"
+    cur.execute(phone_find.format(table="phonebook"), [phone])
+    result_phone = cur.fetchone()
+    if result_phone is None:
+        print("Записи отсутсвуют")
     else:
-        print("Некоректный ввод")
-        return
-
+        find_client_id = (
+            "select first_name, last_name, email from {table} where id = %s"
+        )
+        cur.execute(find_client_id.format(table="client"), [result_phone[1]])
+        result_id = cur.fetchone()
+        print(f"Найдена запись {result_phone}, принадлежащая {result_id}, запись удалена.")
+        phone_del = "delete from {table} where number = %s"
+        cur.execute(phone_del.format(table="phonebook"), [result_phone[0]])
     conn.commit()
 
 
-def delete_client(cur):
-    print(
-        "Поиск клиента осуществляеться по email, так как он уникален для каждого клиента."
-    )
-    search = input("Введите email клиента: ")
+def delete_client(cur, client_id):
     find_client = (
-        "select id, first_name, last_name, email from {table} where email = %s"
+        "select id, first_name, last_name, email from {table} where id = %s"
     )
-    cur.execute(find_client.format(table="client"), [search])
+    cur.execute(find_client.format(table="client"), [client_id])
     result = cur.fetchone()
-    id_client = result[0]
-    if search in result:
-        answer = input(
-            f"Найдена запись {result[1]} {result[2]}, email: {result[3]} удалить? Введите yes/no: "
-        )
-        if answer.lower() == "yes":
-            phone_del = "delete from {table} where clientid = %s"
-            cur.execute(phone_del.format(table="phonebook"), [id_client])
-            client_del = "delete from {table} where id = %s"
-            cur.execute(client_del.format(table="client"), [id_client])
-            conn.commit()
-            print("Запись и связанные номера телефонов удалены!")
-        elif answer.lower() == "no":
-                return
+    if result is None:
+        print('Запись с таким ID не найдена')
+        return
+    else:
+        phone_del = "delete from {table} where clientid = %s"
+        cur.execute(phone_del.format(table="phonebook"), [client_id])
+        client_del = "delete from {table} where id = %s"
+        cur.execute(client_del.format(table="client"), [client_id])
+        conn.commit()
+        print(f"Запись c ID {client_id} удалена!")
+        return
 
 
-def client_search(cur):
+def client_search(cur, req):
     print(
         f"Поиск по имени - 1\n"
         f"Поиск по фамилии - 2\n"
@@ -290,15 +216,15 @@ def operation():
         if user_comand == "1":
             creat_tables(cur)
         elif user_comand == "2":
-            add_client(cur)
+            add_client(cur, 'art@ar333t.ru', 'Bob', 'Stack')
         elif user_comand == "3":
-            add_phone(cur)
+            add_phone(cur, 58578, 10)
         elif user_comand == "4":
-            edit_client(cur)
+            edit_client(cur, 'email', 'new_first_name', 'new_last_name', 'new_email')
         elif user_comand == "5":
-            delete_phone(cur)
+            delete_phone(cur, '77777')
         elif user_comand == "6":
-            delete_client(cur)
+            delete_client(cur, 6)
         elif user_comand == "7":
             client_search(cur)
         else:
