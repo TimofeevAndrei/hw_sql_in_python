@@ -2,7 +2,7 @@ import psycopg2
 from settings import PASS
 
 
-def creat_tables():
+def creat_tables(cur):
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS client(
@@ -26,7 +26,7 @@ def creat_tables():
     return
 
 
-def add_client():
+def add_client(cur):
     in_email = input("Введите email: ")
 
     cur.execute("select email from client")
@@ -54,7 +54,7 @@ def add_client():
     return
 
 
-def add_phone():
+def add_phone(cur):
     in_phone = int(input("Введите номер телефона: "))
 
     cur.execute("select number from phonebook")
@@ -93,7 +93,7 @@ def add_phone():
         return
 
 
-def edit_client():
+def edit_client(cur):
     print(
         "Поиск клиента осуществляеться по email, так как он уникален для каждого клиента."
     )
@@ -126,7 +126,7 @@ def edit_client():
         )
 
 
-def delete_phone():
+def delete_phone(cur):
     request = int(
         input(
             f"По какому параметру осуществить поиск?\n"
@@ -192,7 +192,7 @@ def delete_phone():
     conn.commit()
 
 
-def delete_client():
+def delete_client(cur):
     print(
         "Поиск клиента осуществляеться по email, так как он уникален для каждого клиента."
     )
@@ -218,7 +218,7 @@ def delete_client():
                 return
 
 
-def client_search():
+def client_search(cur):
     print(
         f"Поиск по имени - 1\n"
         f"Поиск по фамилии - 2\n"
@@ -288,19 +288,19 @@ def operation():
     while True:
         user_comand = input("Введите команду:")
         if user_comand == "1":
-            creat_tables()
+            creat_tables(cur)
         elif user_comand == "2":
-            add_client()
+            add_client(cur)
         elif user_comand == "3":
-            add_phone()
+            add_phone(cur)
         elif user_comand == "4":
-            edit_client()
+            edit_client(cur)
         elif user_comand == "5":
-            delete_phone()
+            delete_phone(cur)
         elif user_comand == "6":
-            delete_client()
+            delete_client(cur)
         elif user_comand == "7":
-            client_search()
+            client_search(cur)
         else:
             print("Неверная команда")
 
